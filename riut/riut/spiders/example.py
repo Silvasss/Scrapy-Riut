@@ -1,21 +1,36 @@
 import scrapy
 
-#response.css(".metadataFieldValue ::text"
-#response.css(".itemDisplayTable").get()
+# https://repositorio.utfpr.edu.br/jspui/handle/1/20556
+# response.css("tr ::text").getall()
 
 class ExampleSpider(scrapy.Spider):
     name = 'example'
 
-    start_urls = ['https://repositorio.utfpr.edu.br/jspui/handle/1/20556']
+    start_urls = ["https://repositorio.utfpr.edu.br/jspui/handle/1/20556"]
 
     def parse(self, response):
-        for post in response.css(".itemDisplayTable"):
-            yield {
-                "Titulo" : post.css(".metadataFieldValue ::text").get(),
-                "Autor(es)" : post.css(".metadataFieldValue ::text")[1].get(),
-                "Orientador(es)" : post.css(".metadataFieldValue ::text")[2].get(),
-                "Palavras-chave": post.css(".subject ::text").getall(),
-                "Data do documento" : post.css(".metadataFieldValue ::text")[9].get(),
-                "Resumo" : post.css(".metadataFieldValue ::text")[10].get(),
-                "Repositorio" : post.css(".metadataFieldValue ::text")[11].get()
-            }
+        camposInteresse = ["Título:", "Autor(es):", "Orientador(es):", "Data do documento:", "Resumo:", "URI:"]
+
+        # Dicionario temporario
+        dictAux = {}
+
+        for post in response.css("tr"):
+            aux = post.css("::text").get()
+
+            try:
+                if any(i in aux for i in camposInteresse):
+                    dictAux[post.css("::text")[0].get()] = post.css("::text")[1].get()
+                elif "Palavras-chave:" in aux:
+                    dictAux[post.css("::text")[0].get()] = post.css("::text")[1:].getall()
+            except NameError:
+                pass
+
+        yield {
+            "Título" : dictAux["Título:\xa0"],
+            "Autor(es)" : dictAux["Autor(es):\xa0"],
+            "Orientador(es)" : dictAux["Orientador(es):\xa0"],
+            "Palavras-chave" : dictAux["Palavras-chave:\xa0"],
+            "Data do documento" : dictAux["Data do documento:\xa0"],
+            "Resumo" : dictAux["Resumo:\xa0"],
+            "Repositorio" : dictAux["URI:\xa0"]
+        }
