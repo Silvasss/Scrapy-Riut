@@ -12,6 +12,7 @@ BOT_NAME = 'riut'
 SPIDER_MODULES = ['riut.spiders']
 NEWSPIDER_MODULE = 'riut.spiders'
 
+FEED_EXPORT_ENCODING = 'utf-8'
 
 # Crawl responsibly by identifying yourself (and your website) on the user-agent
 #USER_AGENT = 'riut (+http://www.yourdomain.com)'
@@ -62,9 +63,9 @@ ROBOTSTXT_OBEY = True
 
 # Configure item pipelines
 # See https://docs.scrapy.org/en/latest/topics/item-pipeline.html
-#ITEM_PIPELINES = {
-#    'riut.pipelines.RiutPipeline': 300,
-#}
+ITEM_PIPELINES = {
+    'riut.pipelines.RiutPipeline': 300,
+}
 
 # Enable and configure the AutoThrottle extension (disabled by default)
 # See https://docs.scrapy.org/en/latest/topics/autothrottle.html
