@@ -4,23 +4,23 @@
 # See: https://docs.scrapy.org/en/latest/topics/item-pipeline.html
 
 # useful for handling different item types with a single interface
-from itemadapter import ItemAdapter
-
+from datetime import datetime
 
 class RiutPipeline:
     def process_item(self, item, spider):
-        try:
-            if item['Título:\xa0'] != None and item['Autor(es):\xa0'] != None and item['Orientador(es):\xa0'] != None and item['Palavras-chave:\xa0'] != None and item['Resumo:\xa0'] != None and item['URI:\xa0'] != None and item['Data do documento:\xa0'] != None:
-                return {
-                        "Título": item["Título:\xa0"],
-                        "Autor(es)": item["Autor(es):\xa0"],
-                        "Orientador(es)": item["Orientador(es):\xa0"],
-                        "Palavras-chave": item["Palavras-chave:\xa0"],
-                        "Data do documento": item["Data do documento:\xa0"],
-                        "Resumo": item["Resumo:\xa0"],
-                        "Repositorio": item["URI:\xa0"]
-                    }
-        except ValueError:
-            return False
+        datas = {0o1: 'Jan', 0o2: 'Fev', 0o3: 'Mar', 0o4: 'Abri', 0o5: 'Mai', 0o6: 'Jun', 0o7: 'Jul', 8: 'Ago', 9: 'Set', 10: 'Out', 11: 'Nov', 12: 'Dez'}
 
-        #return True
+        if len(item) != 7:
+            item = {}
+        else:
+            #
+            aux = item['Datadocumento'].split('-')
+
+            for i in datas:
+                try:
+                    if datas[i] == aux[1]:
+                        item['Datadocumento'] = f"{aux[0]}-{i}-{aux[2]}"
+                except ValueError:
+                    pass
+
+        return item

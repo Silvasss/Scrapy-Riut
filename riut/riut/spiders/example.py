@@ -2,16 +2,19 @@ import scrapy
 from scrapy.spidermiddlewares.httperror import HttpError
 from twisted.internet.error import DNSLookupError
 from twisted.internet.error import TimeoutError, TCPTimedOutError
+from riut.items import RiutItem
+
+
+#response.xpath('//*[@id="content"]/div[3]/div/div[1]/div[3]/div/table//text()').extract() --- Retorna tudo sem os links
+#response.xpath('//*[@id="content"]/div[3]/div/div[1]/div[3]/div/table//a').extract() --- Retorna o nome da publicação e o link
+#response.xpath('//*[@id="content"]/div[3]/div/div[1]/div[3]/div/table//a/@href').extract() --- Retorna só o link da publicação
+#response.xpath('//*[@id="content"]/div[3]/div/div[1]/div[2]/ul/li[8]//a/@href').extract() --- Caminho para a próxima página
 
 
 class ExampleSpider(scrapy.Spider):
     name = 'example'
-
-    start_urls = []
-
-    # Criando os links dos repositorios
-    for i in range(0, 23500):
-        start_urls.append("https://repositorio.utfpr.edu.br/jspui/handle/1/{}".format(i))
+    #https://repositorio.utfpr.edu.br/jspui/simple-search?query=saude+mental&sort_by=score&order=desc&rpp=100&etal=0&start=0
+    start_urls = ['https://repositorio.utfpr.edu.br/jspui/simple-search?query=saude+mental']
 
     # https://docs.scrapy.org/en/latest/topics/request-response.html#topics-request-response-ref-request-callback-arguments
     def start_requests(self):
@@ -20,14 +23,46 @@ class ExampleSpider(scrapy.Spider):
 
     # Faz acontece, caso nao ocorra nenhum erro
     def parse(self, response):
-        # Dicionario temporario
-        dictAux = {}
+        # Retorna os links das publicações
+        links = response.xpath('//*[@id="content"]/div[3]/div/div[1]/div[3]/div/table//a/@href').extract()
 
-        for post in response.css("tr"):
+        for i in links:
+            i = response.urljoin(i + '?model=full')
 
-            dictAux[post.css("::text")[0].get()] = post.css("::text")[1].get()
+            yield scrapy.Request(i, callback = self.extracao)
 
-        yield dictAux
+        nextPage = response.xpath('//*[@id="content"]/div[3]/div/div[1]/div[2]/ul/li[8]//a/@href').extract()
+
+        if nextPage:
+            nextPage = response.urljoin(nextPage)
+
+            yield scrapy.Request(nextPage, callback = self.parse)
+
+
+    def extracao(self, response):
+        itens = RiutItem()
+
+        campos = response.xpath('.//*[@id="content"]/div[3]/table//tr')
+
+        for i in campos:
+            camp_chave = i.xpath('td[1]/text()').get()
+            if camp_chave is not None:
+                if 'Título' in i.xpath('td[1]/text()').get():
+                    itens['Titulo'] = i.xpath('td[2]//text()').get()
+                elif 'Autor(es)' in i.xpath('td[1]/text()').get():
+                    itens['Autores'] = i.xpath('td[2]//text()').get()
+                elif 'Orientador(es)' in i.xpath('td[1]/text()').get():
+                    itens['Orientadores'] = i.xpath('td[2]//text()').get()
+                elif 'Palavras-chave' in i.xpath('td[1]/text()').get():
+                    itens['Palavraschaves'] = i.xpath('td[2]//text()').getall()
+                elif 'Data do documento' in i.xpath('td[1]/text()').get():
+                    itens['Datadocumento'] = i.xpath('td[2]//text()').get()
+                elif 'Resumo' in i.xpath('td[1]/text()').get():
+                    itens['Resumo'] = i.xpath('td[2]//text()').get()
+                elif 'URI' in i.xpath('td[1]/text()').get():
+                    itens['Repositorio'] = i.xpath('td[2]//text()').get()
+
+        yield itens
 
 
     def errback_httpbin(self, failure):
