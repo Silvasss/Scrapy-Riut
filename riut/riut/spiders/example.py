@@ -5,15 +5,9 @@ from twisted.internet.error import TimeoutError, TCPTimedOutError
 from riut.items import RiutItem
 
 
-#response.xpath('//*[@id="content"]/div[3]/div/div[1]/div[3]/div/table//text()').extract() --- Retorna tudo sem os links
-#response.xpath('//*[@id="content"]/div[3]/div/div[1]/div[3]/div/table//a').extract() --- Retorna o nome da publicação e o link
-#response.xpath('//*[@id="content"]/div[3]/div/div[1]/div[3]/div/table//a/@href').extract() --- Retorna só o link da publicação
-#response.xpath('//*[@id="content"]/div[3]/div/div[1]/div[2]/ul/li[8]//a/@href').extract() --- Caminho para a próxima página
-
-
 class ExampleSpider(scrapy.Spider):
     name = 'example'
-    #https://repositorio.utfpr.edu.br/jspui/simple-search?query=saude+mental&sort_by=score&order=desc&rpp=100&etal=0&start=0
+
     start_urls = ['https://repositorio.utfpr.edu.br/jspui/simple-search?query=saude+mental']
 
     # https://docs.scrapy.org/en/latest/topics/request-response.html#topics-request-response-ref-request-callback-arguments
@@ -31,10 +25,10 @@ class ExampleSpider(scrapy.Spider):
 
             yield scrapy.Request(i, callback = self.extracao)
 
-        nextPage = response.xpath('//*[@id="content"]/div[3]/div/div[1]/div[2]/ul/li[8]//a/@href').extract()
+        nextPage_url = response.css('ul.pull-right > *:last-child > a::attr(href)').getall()
 
-        if nextPage:
-            nextPage = response.urljoin(nextPage)
+        if nextPage_url is not None:
+            nextPage = response.urljoin(nextPage_url[0])
 
             yield scrapy.Request(nextPage, callback = self.parse)
 
