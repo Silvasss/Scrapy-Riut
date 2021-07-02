@@ -9,7 +9,6 @@ from itemadapter import ItemAdapter
 
 class RiutPipeline:
     def process_item(self, item, spider):
-        # Trata o dicionario que está sendo recebido da função principal, olha o código no git para ver como tratar baseado na versão anterior
         try:
             if item['Título:\xa0'] != None and item['Autor(es):\xa0'] != None and item['Orientador(es):\xa0'] != None and item['Palavras-chave:\xa0'] != None and item['Resumo:\xa0'] != None and item['URI:\xa0'] != None and item['Data do documento:\xa0'] != None:
                 return {
